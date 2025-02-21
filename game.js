@@ -25,8 +25,8 @@ function preload() {
 function create() {
     // Background - tile the 96x96 image across 2000x600
     let bg = this.add.tileSprite(0, 0, 2000, 600, 'background').setOrigin(0, 0);
-    bg.tileScaleX = 1; // No scaling, keep original size
-    bg.tileScaleY = 1; // No scaling, keep original size
+    bg.tileScaleX = 1;
+    bg.tileScaleY = 1;
 
     // Platforms
     platforms = this.physics.add.staticGroup();
@@ -38,8 +38,10 @@ function create() {
     platforms.create(800, 200, 'platform');
     platforms.create(1200, 350, 'platform');
 
-    // Player
-    player = this.physics.add.sprite(100, 450, 'player').setBounce(0.1);
+    // Player - 42x52 sprite
+    player = this.physics.add.sprite(100, 430, 'player').setBounce(0.1); // Higher start (568-52=516, adjusted to 430)
+    player.setScale(0.75); // Scale down to ~31x39 for better fit
+    player.body.setSize(42, 52); // Match collision to 42x52
     player.setCollideWorldBounds(false);
 
     // Enemies
