@@ -4,13 +4,13 @@ var config = {
     height: 600,
     physics: {
         default: 'arcade',
-        arcade: { gravity: { y: 300 }, debug: false }
+        arcade: { gravity: { y: 500 }, debug: false }
     },
     scene: { preload: preload, create: create, update: update }
 };
 var game = new Phaser.Game(config);
 
-var player, platforms, enemies, coins, cursors;
+var player, platforms, enemies, coins, flagpole, cursors, score = 0, scoreText;
 
 function preload() {
     this.load.image('background', 'assets/background.png');
@@ -23,46 +23,93 @@ function preload() {
 }
 
 function create() {
-    this.add.image(400, 300, 'background');
+    // Background - full scrolling sky
+    let bg = this.add.tileSprite(0, 0, 2000, 600, 'background').setOrigin(0, 0);
+
+    // Platforms
     platforms = this.physics.add.staticGroup();
-    for (let i = 0; i < 800; i += 64) {
+    for (let i = 0; i < 2000; i += 64) {
         platforms.create(i, 568, 'ground');
     }
     platforms.create(200, 400, 'platform');
     platforms.create(500, 300, 'platform');
+    platforms.create(800, 200, 'platform');
+    platforms.create(1200, 350, 'platform');
 
-    player = this.physics.add.sprite(100, 450, 'player');
-    player.setCollideWorldBounds(true);
+    // Player
+    player = this.physics.add.sprite(100, 450, 'player').setBounce(0.1);
+    player.setCollideWorldBounds(false);
 
+    // Enemies
     enemies = this.physics.add.group();
     enemies.create(300, 500, 'enemy').setVelocityX(100);
+    enemies.create(600, 250, 'enemy').setVelocityX(-100);
 
+    // Coins
     coins = this.physics.add.group();
     coins.create(250, 350, 'coin');
     coins.create(550, 250, 'coin');
+    coins.create(850, 150, 'coin');
 
-    flagpole = this.physics.add.staticSprite(700, 500, 'flagpole');
+    // Flagpole
+    flagpole = this.physics.add.staticSprite(1900, 500, 'flagpole');
 
+    // Collisions
     this.physics.add.collider(player, platforms);
     this.physics.add.collider(enemies, platforms, (enemy) => {
         enemy.setVelocityX(-enemy.body.velocity.x);
     });
-    this.physics.add.overlap(player, enemies, (p, e) => this.scene.restart(), null, this);
-    this.physics.add.overlap(player, coins, (p, c) => c.destroy(), null, this);
-    this.physics.add.overlap(player, flagpole, () => alert('You Win!'), null, this);
+    this.physics.add.overlap(player, enemies, handleEnemyCollision, null, this);
+    this.physics.add.overlap(player, coins, collectCoin, null, this);
+    this.physics.add.overlap(player, flagpole, reachGoal, null, this);
 
+    // Camera
+    this.cameras.main.setBounds(0, 0, 2000, 600);
+    this.cameras.main.startFollow(player);
+
+    // Controls
     cursors = this.input.keyboard.createCursorKeys();
+
+    // Score
+    scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '20px', fill: '#fff' }).setScrollFactor(0);
 }
 
 function update() {
     if (cursors.left.isDown) {
-        player.setVelocityX(-160);
+        player.setVelocityX(-200);
     } else if (cursors.right.isDown) {
-        player.setVelocityX(160);
+        player.setVelocityX(200);
     } else {
         player.setVelocityX(0);
     }
     if (cursors.up.isDown && player.body.touching.down) {
-        player.setVelocityY(-330);
+        player.setVelocityY(-400);
     }
+    if (player.y > 600) {
+        this.scene.restart();
+        score = 0;
+        scoreText.setText('Score: ' + score);
+    }
+}
+
+function handleEnemyCollision(player, enemy) {
+    if (player.body.touching.down && enemy.body.touching.up) {
+        enemy.destroy();
+        player.setVelocityY(-200);
+    } else {
+        this.scene.restart();
+        score = 0;
+        scoreText.setText('Score: ' + score);
+    }
+}
+
+function collectCoin(player, coin) {
+    coin.destroy();
+    score += 10;
+    scoreText.setText('Score: ' + score);
+}
+
+function reachGoal(player, flagpole) {
+    this.add.text(400, 300, 'You Win!', { fontSize: '32px', fill: '#fff' }).setScrollFactor(0);
+    this.physics.pause();
 }
