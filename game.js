@@ -23,8 +23,10 @@ function preload() {
 }
 
 function create() {
-    // Background - full scrolling sky
+    // Background - tile the 96x96 image across 2000x600
     let bg = this.add.tileSprite(0, 0, 2000, 600, 'background').setOrigin(0, 0);
+    bg.tileScaleX = 1; // No scaling, keep original size
+    bg.tileScaleY = 1; // No scaling, keep original size
 
     // Platforms
     platforms = this.physics.add.staticGroup();
